@@ -339,9 +339,10 @@ def main() -> None:
 
         logger.debug(f"Server configuration: {config}")
 
-        # Phase 1: Ensure Authentication is Ready
+        # Phase 1: Ensure Authentication is Ready (skip for OAuth — no cookie profile needed)
         try:
-            ensure_authentication_ready()
+            if not (config.server.oauth and config.server.oauth.enabled):
+                ensure_authentication_ready()
             if config.is_interactive:
                 print("✅ Authentication ready")
             logger.info("Authentication ready")
