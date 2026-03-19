@@ -66,9 +66,10 @@ def create_mcp_server(oauth_config: "OAuthConfig | None" = None) -> FastMCP:
             password=oauth_config.password,
         )
 
+    combined_lifespan = browser_lifespan if auth else auth_lifespan | browser_lifespan
     mcp = FastMCP(
         "linkedin_scraper",
-        lifespan=auth_lifespan | browser_lifespan,
+        lifespan=combined_lifespan,
         mask_error_details=True,
         auth=auth,
     )
