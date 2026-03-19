@@ -52,5 +52,5 @@ jobs:
             --allow-unauthenticated \
             --cpu-boost \
             --timeout 300 \
-            --set-env-vars "TRANSPORT=streamable-http,HOST=0.0.0.0,PORT=8000,LOG_LEVEL=WARNING,HEADLESS=true" \
+            --set-env-vars "TRANSPORT=streamable-http,HOST=0.0.0.0,LOG_LEVEL=WARNING,HEADLESS=true" \
             --set-secrets "OAUTH_PASSWORD=OAUTH_PASSWORD:latest,OAUTH_BASE_URL=OAUTH_BASE_URL:latest,AUTH=AUTH:latest"
