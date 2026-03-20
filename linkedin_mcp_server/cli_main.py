@@ -41,7 +41,11 @@ from linkedin_mcp_server.session_state import (
     runtime_storage_state_path,
     source_state_path,
 )
-from linkedin_mcp_server.storage import get_storage_backend, sync_from_remote
+from linkedin_mcp_server.storage import (
+    delete_remote,
+    get_storage_backend,
+    sync_from_remote,
+)
 from linkedin_mcp_server.server import create_mcp_server
 from linkedin_mcp_server.setup import run_interactive_setup, run_profile_creation
 
@@ -107,6 +111,17 @@ def clear_profile_and_exit() -> None:
 
     if clear_auth_state(get_profile_dir()):
         print("✅ LinkedIn authentication state cleared successfully!")
+        # Delete remote auth state if configured
+        if config.storage.backend != "local":
+            try:
+                assert config.storage.username is not None
+                storage_backend = get_storage_backend(config.storage)
+                if delete_remote(config.storage.username, storage_backend):
+                    print("✅ Remote auth state deleted")
+                else:
+                    print("⚠️  Failed to delete remote auth state")
+            except Exception as e:
+                print(f"⚠️  Could not delete remote auth state: {e}")
     else:
         print("❌ Failed to clear authentication state")
         sys.exit(1)
