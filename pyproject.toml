@@ -49,6 +49,9 @@ Changelog = "https://github.com/stickerdaniel/linkedin-mcp-server/releases"
 linkedin-mcp-server = "linkedin_mcp_server.cli_main:main"
 linkedin-scraper-mcp = "linkedin_mcp_server.cli_main:main"
 
+[project.optional-dependencies]
+gcs = ["google-cloud-storage>=2.0"]
+
 [build-system]
 requires = ["setuptools>=68.0", "wheel"]
 build-backend = "setuptools.build_meta"
