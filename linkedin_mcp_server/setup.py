@@ -14,7 +14,13 @@ from linkedin_mcp_server.core import (
     wait_for_manual_login,
     warm_up_browser,
 )
-from linkedin_mcp_server.session_state import portable_cookie_path, write_source_state
+from linkedin_mcp_server.config import get_config
+from linkedin_mcp_server.session_state import (
+    auth_root_dir,
+    portable_cookie_path,
+    write_source_state,
+)
+from linkedin_mcp_server.storage import get_storage_backend, sync_to_remote
 
 from linkedin_mcp_server.drivers.browser import get_profile_dir
 
@@ -84,6 +90,16 @@ async def interactive_login(
             print("   Cookies exported for Docker portability")
             source_state = write_source_state(user_data_dir)
             print(f"   Source session generation: {source_state.login_generation}")
+            # Sync to remote storage if configured
+            config = get_config()
+            if config.storage.backend != "local":
+                assert config.storage.username is not None
+                storage_backend = get_storage_backend(config.storage)
+                auth_root = auth_root_dir(user_data_dir)
+                if sync_to_remote(auth_root, config.storage.username, storage_backend):
+                    print("   Auth state synced to remote storage")
+                else:
+                    print("   Warning: failed to sync auth state to remote storage")
         else:
             print(
                 "   Warning: cookie export failed; Docker bridge may not work. "

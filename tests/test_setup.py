@@ -56,6 +56,10 @@ async def test_interactive_login_writes_source_state_when_cookie_export_succeeds
         "linkedin_mcp_server.setup.write_source_state", write_source_state
     )
     monkeypatch.setattr("linkedin_mcp_server.setup.asyncio.sleep", AsyncMock())
+    monkeypatch.setattr(
+        "linkedin_mcp_server.setup.get_config",
+        lambda: SimpleNamespace(storage=SimpleNamespace(backend="local")),
+    )
 
     assert await interactive_login(tmp_path / "profile") is True
 
