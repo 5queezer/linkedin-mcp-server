@@ -296,3 +296,40 @@ class TestLoaders:
 
         with pytest.raises(ConfigurationError, match="Invalid AUTH"):
             load_from_env(AppConfig())
+
+
+class TestStorageConfigEnvLoading:
+    def test_load_storage_backend_from_env(self, monkeypatch):
+        monkeypatch.setenv("AUTH_STORAGE_BACKEND", "gcs")
+        monkeypatch.setenv("AUTH_STORAGE_GCS_BUCKET", "my-bucket")
+        monkeypatch.setenv("AUTH_STORAGE_USERNAME", "testuser")
+        from linkedin_mcp_server.config.loaders import load_from_env
+
+        config = AppConfig()
+        load_from_env(config)
+        assert config.storage.backend == "gcs"
+        assert config.storage.gcs_bucket == "my-bucket"
+        assert config.storage.username == "testuser"
+
+    def test_load_storage_prefix_from_env(self, monkeypatch):
+        monkeypatch.setenv("AUTH_STORAGE_GCS_PREFIX", "linkedin-mcp")
+        from linkedin_mcp_server.config.loaders import load_from_env
+
+        config = AppConfig()
+        load_from_env(config)
+        assert config.storage.gcs_prefix == "linkedin-mcp"
+
+    def test_storage_defaults_when_no_env(self, monkeypatch):
+        for var in [
+            "AUTH_STORAGE_BACKEND",
+            "AUTH_STORAGE_GCS_BUCKET",
+            "AUTH_STORAGE_GCS_PREFIX",
+            "AUTH_STORAGE_USERNAME",
+        ]:
+            monkeypatch.delenv(var, raising=False)
+        from linkedin_mcp_server.config.loaders import load_from_env
+
+        config = AppConfig()
+        load_from_env(config)
+        assert config.storage.backend == "local"
+        assert config.storage.gcs_bucket is None
