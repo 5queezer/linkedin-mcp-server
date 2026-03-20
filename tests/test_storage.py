@@ -162,3 +162,27 @@ class TestDeleteRemote:
         result = delete_remote("testuser", backend)
         assert result is True
         assert len(backend.objects) == 0
+
+
+class TestGCSBackendImport:
+    def test_gcs_backend_has_required_methods(self):
+        """Verify GCSBackend satisfies the StorageBackend protocol."""
+        try:
+            from linkedin_mcp_server.storage.gcs import GCSBackend
+        except ImportError:
+            pytest.skip("google-cloud-storage not installed")
+
+        from linkedin_mcp_server.storage.backend import StorageBackend
+
+        backend = GCSBackend(bucket="test", prefix="pfx")
+        assert isinstance(backend, StorageBackend)
+
+    def test_gcs_backend_stores_config(self):
+        try:
+            from linkedin_mcp_server.storage.gcs import GCSBackend
+        except ImportError:
+            pytest.skip("google-cloud-storage not installed")
+
+        backend = GCSBackend(bucket="my-bucket", prefix="my-prefix")
+        assert backend.bucket == "my-bucket"
+        assert backend.prefix == "my-prefix"
