@@ -42,6 +42,12 @@ def _import_gcs_backend():
 def get_storage_backend(config: StorageConfig) -> StorageBackend:
     """Create a storage backend from configuration."""
     if config.backend == "gcs":
+        if not config.gcs_bucket:
+            from linkedin_mcp_server.config.schema import ConfigurationError
+
+            raise ConfigurationError(
+                "AUTH_STORAGE_GCS_BUCKET is required when AUTH_STORAGE_BACKEND=gcs"
+            )
         try:
             GCSBackend = _import_gcs_backend()
         except ImportError:

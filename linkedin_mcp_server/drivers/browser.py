@@ -508,10 +508,11 @@ async def close_browser() -> None:
         try:
             config = get_config()
             if config.storage.backend != "local":
-                assert config.storage.username is not None
                 storage_backend = get_storage_backend(config.storage)
                 auth_root = auth_root_dir()
-                sync_to_remote(auth_root, config.storage.username, storage_backend)
+                sync_to_remote(
+                    auth_root, config.storage.username or "", storage_backend
+                )
         except Exception:
             logger.debug("Remote storage sync on close skipped", exc_info=True)
     await browser.close()

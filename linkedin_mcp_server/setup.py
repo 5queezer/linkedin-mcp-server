@@ -93,10 +93,11 @@ async def interactive_login(
             # Sync to remote storage if configured
             config = get_config()
             if config.storage.backend != "local":
-                assert config.storage.username is not None
                 storage_backend = get_storage_backend(config.storage)
                 auth_root = auth_root_dir(user_data_dir)
-                if sync_to_remote(auth_root, config.storage.username, storage_backend):
+                if sync_to_remote(
+                    auth_root, config.storage.username or "", storage_backend
+                ):
                     print("   Auth state synced to remote storage")
                 else:
                     print("   Warning: failed to sync auth state to remote storage")

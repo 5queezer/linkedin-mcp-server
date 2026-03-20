@@ -163,6 +163,13 @@ class TestDeleteRemote:
         assert result is True
         assert len(backend.objects) == 0
 
+    def test_returns_false_on_failure(self):
+        from linkedin_mcp_server.storage.backend import delete_remote
+
+        backend = FailingBackend()
+        result = delete_remote("testuser", backend)
+        assert result is False
+
 
 class TestGCSBackendImport:
     def test_gcs_backend_has_required_methods(self):

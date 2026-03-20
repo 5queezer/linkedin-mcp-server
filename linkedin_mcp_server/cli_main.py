@@ -114,9 +114,8 @@ def clear_profile_and_exit() -> None:
         # Delete remote auth state if configured
         if config.storage.backend != "local":
             try:
-                assert config.storage.username is not None
                 storage_backend = get_storage_backend(config.storage)
-                if delete_remote(config.storage.username, storage_backend):
+                if delete_remote(config.storage.username or "", storage_backend):
                     print("✅ Remote auth state deleted")
                 else:
                     print("⚠️  Failed to delete remote auth state")
@@ -358,11 +357,12 @@ def main() -> None:
 
         # Phase 1: Ensure Authentication is Ready (skip for OAuth — no cookie profile needed)
         try:
-            if config.storage.backend != "local":
-                assert config.storage.username is not None
+            if config.storage.backend != "local" and not (
+                config.server.oauth and config.server.oauth.enabled
+            ):
                 backend = get_storage_backend(config.storage)
                 auth_root = auth_root_dir()
-                sync_from_remote(auth_root, config.storage.username, backend)
+                sync_from_remote(auth_root, config.storage.username or "", backend)
             if not (config.server.oauth and config.server.oauth.enabled):
                 ensure_authentication_ready()
             if config.is_interactive:
