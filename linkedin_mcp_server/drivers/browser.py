@@ -25,6 +25,7 @@ from linkedin_mcp_server.debug_trace import record_page_trace
 from linkedin_mcp_server.debug_utils import stabilize_navigation
 from linkedin_mcp_server.session_state import (
     SourceState,
+    auth_root_dir,
     clear_runtime_profile,
     get_runtime_id,
     get_source_profile_dir,
@@ -36,6 +37,7 @@ from linkedin_mcp_server.session_state import (
     runtime_storage_state_path,
     write_runtime_state,
 )
+from linkedin_mcp_server.storage import get_storage_backend, sync_to_remote
 
 logger = logging.getLogger(__name__)
 
@@ -501,6 +503,17 @@ async def close_browser() -> None:
             await browser.export_cookies(cookie_export_path)
         except Exception:
             logger.debug("Cookie export on close skipped", exc_info=True)
+    # Sync to remote storage if configured (best-effort)
+    if cookie_export_path is not None:
+        try:
+            config = get_config()
+            if config.storage.backend != "local":
+                assert config.storage.username is not None
+                storage_backend = get_storage_backend(config.storage)
+                auth_root = auth_root_dir()
+                sync_to_remote(auth_root, config.storage.username, storage_backend)
+        except Exception:
+            logger.debug("Remote storage sync on close skipped", exc_info=True)
     await browser.close()
     logger.info("Browser closed")
 
