@@ -6,6 +6,7 @@ from linkedin_mcp_server.config.schema import (
     ConfigurationError,
     OAuthConfig,
     ServerConfig,
+    StorageConfig,
 )
 
 
@@ -119,6 +120,40 @@ class TestOAuthConfig:
         config.server.oauth = OAuthConfig(enabled=True)  # Missing base_url + password
         setattr(config.server, flag, True)
         config.validate()  # No error — skipped for command-only modes
+
+
+class TestStorageConfig:
+    def test_defaults(self):
+        config = StorageConfig()
+        assert config.backend == "local"
+        assert config.gcs_bucket is None
+        assert config.gcs_prefix == ""
+        assert config.username is None
+
+    def test_validate_gcs_requires_bucket(self):
+        config = StorageConfig(backend="gcs", username="testuser")
+        with pytest.raises(ConfigurationError, match="AUTH_STORAGE_GCS_BUCKET"):
+            config.validate()
+
+    def test_validate_gcs_requires_username(self):
+        config = StorageConfig(backend="gcs", gcs_bucket="my-bucket")
+        with pytest.raises(ConfigurationError, match="AUTH_STORAGE_USERNAME"):
+            config.validate()
+
+    def test_validate_gcs_valid(self):
+        config = StorageConfig(
+            backend="gcs", gcs_bucket="my-bucket", username="testuser"
+        )
+        config.validate()  # No error
+
+    def test_validate_local_no_requirements(self):
+        config = StorageConfig()
+        config.validate()  # No error
+
+    def test_validate_invalid_backend(self):
+        config = StorageConfig(backend="s3")
+        with pytest.raises(ConfigurationError, match="local.*gcs"):
+            config.validate()
 
 
 class TestConfigSingleton:
