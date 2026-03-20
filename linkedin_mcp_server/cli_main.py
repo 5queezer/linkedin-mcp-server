@@ -32,6 +32,7 @@ from linkedin_mcp_server.debug_trace import should_keep_traces
 from linkedin_mcp_server.exceptions import CredentialsNotFoundError
 from linkedin_mcp_server.logging_config import configure_logging, teardown_trace_logging
 from linkedin_mcp_server.session_state import (
+    auth_root_dir,
     get_runtime_id,
     load_runtime_state,
     load_source_state,
@@ -40,6 +41,7 @@ from linkedin_mcp_server.session_state import (
     runtime_storage_state_path,
     source_state_path,
 )
+from linkedin_mcp_server.storage import get_storage_backend, sync_from_remote
 from linkedin_mcp_server.server import create_mcp_server
 from linkedin_mcp_server.setup import run_interactive_setup, run_profile_creation
 
@@ -341,6 +343,11 @@ def main() -> None:
 
         # Phase 1: Ensure Authentication is Ready (skip for OAuth — no cookie profile needed)
         try:
+            if config.storage.backend != "local":
+                assert config.storage.username is not None
+                backend = get_storage_backend(config.storage)
+                auth_root = auth_root_dir()
+                sync_from_remote(auth_root, config.storage.username, backend)
             if not (config.server.oauth and config.server.oauth.enabled):
                 ensure_authentication_ready()
             if config.is_interactive:
