@@ -373,7 +373,18 @@ async def get_or_create_browser(
     source_profile_dir = get_profile_dir()
     cookie_path = portable_cookie_path(source_profile_dir)
     source_state = load_source_state(source_profile_dir)
-    if (
+
+    # When remote storage is configured, the profile dir may not exist locally
+    # because only cookies.json + source-state.json are synced from GCS.
+    # The container always runs as a foreign runtime and bridges from cookies.
+    remote_storage = get_config().storage.backend != "local"
+    if remote_storage:
+        if not source_state or not cookie_path.exists():
+            raise AuthenticationError(
+                "No source authentication found in remote storage. "
+                "Run --login on a machine with browser access to create auth artifacts."
+            )
+    elif (
         not source_state
         or not profile_exists(source_profile_dir)
         or not cookie_path.exists()
