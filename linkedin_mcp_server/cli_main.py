@@ -357,9 +357,7 @@ def main() -> None:
 
         # Phase 1: Ensure Authentication is Ready (skip for OAuth — no cookie profile needed)
         try:
-            if config.storage.backend != "local" and not (
-                config.server.oauth and config.server.oauth.enabled
-            ):
+            if config.storage.backend != "local":
                 backend = get_storage_backend(config.storage)
                 auth_root = auth_root_dir()
                 sync_from_remote(auth_root, config.storage.username or "", backend)
