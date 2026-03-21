@@ -25,6 +25,7 @@ from linkedin_mcp_server.debug_trace import record_page_trace
 from linkedin_mcp_server.debug_utils import stabilize_navigation
 from linkedin_mcp_server.session_state import (
     SourceState,
+    auth_root_dir,
     clear_runtime_profile,
     get_runtime_id,
     get_source_profile_dir,
@@ -36,6 +37,7 @@ from linkedin_mcp_server.session_state import (
     runtime_storage_state_path,
     write_runtime_state,
 )
+from linkedin_mcp_server.storage import get_storage_backend, sync_to_remote
 
 logger = logging.getLogger(__name__)
 
@@ -371,7 +373,18 @@ async def get_or_create_browser(
     source_profile_dir = get_profile_dir()
     cookie_path = portable_cookie_path(source_profile_dir)
     source_state = load_source_state(source_profile_dir)
-    if (
+
+    # When remote storage is configured, the profile dir may not exist locally
+    # because only cookies.json + source-state.json are synced from GCS.
+    # The container always runs as a foreign runtime and bridges from cookies.
+    remote_storage = get_config().storage.backend != "local"
+    if remote_storage:
+        if not source_state or not cookie_path.exists():
+            raise AuthenticationError(
+                "No source authentication found in remote storage. "
+                "Run --login on a machine with browser access to create auth artifacts."
+            )
+    elif (
         not source_state
         or not profile_exists(source_profile_dir)
         or not cookie_path.exists()
@@ -501,6 +514,18 @@ async def close_browser() -> None:
             await browser.export_cookies(cookie_export_path)
         except Exception:
             logger.debug("Cookie export on close skipped", exc_info=True)
+    # Sync to remote storage if configured (best-effort)
+    if cookie_export_path is not None:
+        try:
+            config = get_config()
+            if config.storage.backend != "local":
+                storage_backend = get_storage_backend(config.storage)
+                auth_root = auth_root_dir()
+                sync_to_remote(
+                    auth_root, config.storage.username or "", storage_backend
+                )
+        except Exception:
+            logger.debug("Remote storage sync on close skipped", exc_info=True)
     await browser.close()
     logger.info("Browser closed")
 

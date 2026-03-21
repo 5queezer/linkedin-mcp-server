@@ -84,16 +84,44 @@ class ServerConfig:
 
 
 @dataclass
+class StorageConfig:
+    """External auth-state storage configuration."""
+
+    backend: str = "local"
+    gcs_bucket: str | None = None
+    gcs_prefix: str = ""
+    username: str | None = None
+
+    def validate(self) -> None:
+        """Validate storage configuration values."""
+        if self.backend not in ("local", "gcs"):
+            raise ConfigurationError(
+                f"Invalid AUTH_STORAGE_BACKEND: '{self.backend}'. Must be 'local' or 'gcs'."
+            )
+        if self.backend == "gcs":
+            if not self.gcs_bucket:
+                raise ConfigurationError(
+                    "AUTH_STORAGE_GCS_BUCKET is required when AUTH_STORAGE_BACKEND=gcs"
+                )
+            if not self.username:
+                raise ConfigurationError(
+                    "AUTH_STORAGE_USERNAME is required when AUTH_STORAGE_BACKEND=gcs"
+                )
+
+
+@dataclass
 class AppConfig:
     """Main application configuration."""
 
     browser: BrowserConfig = field(default_factory=BrowserConfig)
     server: ServerConfig = field(default_factory=ServerConfig)
+    storage: StorageConfig = field(default_factory=StorageConfig)
     is_interactive: bool = field(default=False)
 
     def validate(self) -> None:
         """Validate all configuration values. Call after modifying config."""
         self.browser.validate()
+        self.storage.validate()
         if self.server.transport == "streamable-http":
             self._validate_transport_config()
             self._validate_path_format()

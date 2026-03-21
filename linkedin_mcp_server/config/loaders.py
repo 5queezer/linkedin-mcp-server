@@ -50,6 +50,10 @@ class EnvironmentKeys:
     AUTH = "AUTH"
     OAUTH_BASE_URL = "OAUTH_BASE_URL"
     OAUTH_PASSWORD = "OAUTH_PASSWORD"
+    AUTH_STORAGE_BACKEND = "AUTH_STORAGE_BACKEND"
+    AUTH_STORAGE_GCS_BUCKET = "AUTH_STORAGE_GCS_BUCKET"
+    AUTH_STORAGE_GCS_PREFIX = "AUTH_STORAGE_GCS_PREFIX"
+    AUTH_STORAGE_USERNAME = "AUTH_STORAGE_USERNAME"
 
 
 def is_interactive_environment() -> bool:
@@ -162,6 +166,19 @@ def load_from_env(config: AppConfig) -> AppConfig:
 
     if oauth_password := os.environ.get(EnvironmentKeys.OAUTH_PASSWORD):
         config.server.oauth.password = oauth_password
+
+    # Auth-state storage
+    if storage_backend := os.environ.get(EnvironmentKeys.AUTH_STORAGE_BACKEND):
+        config.storage.backend = storage_backend
+
+    if gcs_bucket := os.environ.get(EnvironmentKeys.AUTH_STORAGE_GCS_BUCKET):
+        config.storage.gcs_bucket = gcs_bucket
+
+    if gcs_prefix := os.environ.get(EnvironmentKeys.AUTH_STORAGE_GCS_PREFIX):
+        config.storage.gcs_prefix = gcs_prefix
+
+    if storage_username := os.environ.get(EnvironmentKeys.AUTH_STORAGE_USERNAME):
+        config.storage.username = storage_username
 
     return config
 
